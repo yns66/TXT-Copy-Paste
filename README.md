@@ -1,4 +1,4 @@
-Bu scripti, powershell ile çıkartıp EXE ye çevirebilirsiniz.
+Bu scripti, powershell ile EXE ye çevirebilirsiniz.
 Gerekli komutlar aşağıdadır.
 
 Invoke-PS2EXE .\TXT Görüntüleyici-Kopyalayıcı.ps1 .\TXT Görüntüleyici-Kopyalayıcı.exe `
@@ -7,5 +7,6 @@ Invoke-PS2EXE .\TXT Görüntüleyici-Kopyalayıcı.ps1 .\TXT Görüntüleyici-Ko
   -requireAdmin:$false `
   -title "Hazır Metin Seçici"
 
+EXE halide mevcuttur.
 
-  Ek olarak EXE halide mevcuttur.
+Ek olarak seçilen dizini Belgeler altında "HazirMetinSecici" adında gizli klasörün içindeki config text dosyasından çekmektedir.
