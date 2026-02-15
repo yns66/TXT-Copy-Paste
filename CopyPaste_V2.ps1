@@ -1,25 +1,24 @@
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Globalization
+
 $ti = (Get-Culture).TextInfo
 
 function Format-Hitap($text) {
     return $ti.ToTitleCase($text.ToLower())
 }
 
-
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
-
 # =====================
 # AYAR
 # =====================
-$DefaultPath = "C:\Users\YnS\Desktop\New folder"
+# $DefaultPath = "BAŞLANGIÇTA GÖRÜNTÜLEYEBİLMEK İÇİN DİZİN GİRİN"
 
 # =====================
 # FORM
 # =====================
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "Hazır Metinler"
-$form.Size = New-Object System.Drawing.Size(600,420)
+$form.Size = New-Object System.Drawing.Size(650,420)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "FixedDialog"
 $form.MaximizeBox = $false
@@ -30,9 +29,8 @@ $form.MinimizeBox = $true
 # =====================
 $lblFolder = New-Object System.Windows.Forms.Label
 $lblFolder.Location = New-Object System.Drawing.Point(10,12)
-$lblFolder.Size = New-Object System.Drawing.Size(580,20)
+$lblFolder.Size = New-Object System.Drawing.Size(620,20)
 $lblFolder.Font = New-Object System.Drawing.Font("Segoe UI",9,[System.Drawing.FontStyle]::Bold)
-$lblFolder.Text = "Klasör seçilmedi"
 $form.Controls.Add($lblFolder)
 
 # =====================
@@ -45,55 +43,37 @@ $btnSelectFolder.Size = New-Object System.Drawing.Size(100,28)
 $form.Controls.Add($btnSelectFolder)
 
 # =====================
-# MANUEL DİZİN GİRİŞİ
+# MANUEL DİZİN
 # =====================
 $txtPath = New-Object System.Windows.Forms.TextBox
 $txtPath.Location = New-Object System.Drawing.Point(120,36)
-$txtPath.Size = New-Object System.Drawing.Size(460,26)
-$txtPath.Font = New-Object System.Drawing.Font("Segoe UI",9)
+$txtPath.Size = New-Object System.Drawing.Size(510,26)
 $form.Controls.Add($txtPath)
 
 # =====================
-# HİTAP ALANI
+# HİTAP LABEL
 # =====================
 $lblHitap = New-Object System.Windows.Forms.Label
-$lblHitap.Text = "Hitap (Ahmet Bey / Ayşe Hanım):"
-$lblHitap.Location = New-Object System.Drawing.Point(10,70)
-$lblHitap.Size = New-Object System.Drawing.Size(220,20)
+$lblHitap.Location = New-Object System.Drawing.Point(270,70)
+$lblHitap.Size = New-Object System.Drawing.Size(250,20)
+$lblHitap.Font = New-Object System.Drawing.Font("Segoe UI",8,[System.Drawing.FontStyle]::Italic)
+$lblHitap.ForeColor = [System.Drawing.Color]::DimGray
+$lblHitap.Text = "Hitap Edilecek Kişiyi Girin."
 $form.Controls.Add($lblHitap)
 
+# =====================
+# HİTAP TEXTBOX (Placeholderlı)
+# =====================
 $txtHitap = New-Object System.Windows.Forms.TextBox
-$txtHitap.Location = New-Object System.Drawing.Point(230,68)
-$txtHitap.Size = New-Object System.Drawing.Size(200,24)
+$txtHitap.Location = New-Object System.Drawing.Point(10,65)
+$txtHitap.Size = New-Object System.Drawing.Size(250,26)
+$txtHitap.Font = New-Object System.Drawing.Font("Segoe UI",9)
+
+$placeholderText = "Örn: Ahmet Bey / Ayşe Hanım"
+$txtHitap.Text = $placeholderText
+$txtHitap.ForeColor = [System.Drawing.Color]::Gray
+
 $form.Controls.Add($txtHitap)
-
-$txtHitap.Add_Leave({
-    $txtHitap.Text = Format-Hitap $txtHitap.Text
-})
-
-$txtHitap.Add_KeyDown({
-    if ($_.KeyCode -eq "Enter") {
-
-        $txtHitap.Text = Format-Hitap $txtHitap.Text
-
-        if ($listBox.SelectedItem -ne $null) {
-            $key = $listBox.SelectedItem
-            if ($fileMap.ContainsKey($key)) {
-
-                $content = Get-Content $fileMap[$key] -Raw -Encoding UTF8
-
-                if ($txtHitap.Text.Trim() -ne "") {
-                    $prefix = "Merhaba $($txtHitap.Text)`r`n`r`n"
-                    $textBox.Text = $prefix + $content
-                }
-                else {
-                    $textBox.Text = $content
-                }
-            }
-        }
-    }
-})
-
 
 # =====================
 # TXT LİSTESİ
@@ -108,7 +88,7 @@ $form.Controls.Add($listBox)
 # =====================
 $textBox = New-Object System.Windows.Forms.TextBox
 $textBox.Location = New-Object System.Drawing.Point(270,100)
-$textBox.Size = New-Object System.Drawing.Size(310,210)
+$textBox.Size = New-Object System.Drawing.Size(360,210)
 $textBox.Multiline = $true
 $textBox.ScrollBars = "Both"
 $textBox.ReadOnly = $true
@@ -120,14 +100,55 @@ $form.Controls.Add($textBox)
 # =====================
 $btnCopy = New-Object System.Windows.Forms.Button
 $btnCopy.Text = "Kopyala"
-$btnCopy.Location = New-Object System.Drawing.Point(270,320)
+$btnCopy.Location = New-Object System.Drawing.Point(270,330)
 $btnCopy.Size = New-Object System.Drawing.Size(120,28)
 $form.Controls.Add($btnCopy)
 
 # =====================
-# DOSYA MAP
+# BİLDİRİM
 # =====================
+$lblStatus = New-Object System.Windows.Forms.Label
+$lblStatus.Location = New-Object System.Drawing.Point(410,335)
+$lblStatus.Size = New-Object System.Drawing.Size(180,20)
+$lblStatus.Font = New-Object System.Drawing.Font("Segoe UI",9,[System.Drawing.FontStyle]::Bold)
+$lblStatus.ForeColor = [System.Drawing.Color]::Green
+$lblStatus.Text = "Kopyalandı ✔"
+$lblStatus.Visible = $false
+$form.Controls.Add($lblStatus)
+
+$statusTimer = New-Object System.Windows.Forms.Timer
+$statusTimer.Interval = 2000
+$statusTimer.Add_Tick({
+    $lblStatus.Visible = $false
+    $statusTimer.Stop()
+})
+
+$minimizeTimer = New-Object System.Windows.Forms.Timer
+$minimizeTimer.Interval = 500
+$minimizeTimer.Add_Tick({
+    $form.WindowState = "Minimized"
+    $minimizeTimer.Stop()
+})
+
 $fileMap = @{}
+
+function Show-Content {
+    if ($listBox.SelectedItem -ne $null) {
+        $key = $listBox.SelectedItem
+        if ($fileMap.ContainsKey($key)) {
+
+            $content = Get-Content $fileMap[$key] -Raw -Encoding UTF8
+
+            if ($txtHitap.Text.Trim() -ne "" -and $txtHitap.Text -ne $placeholderText) {
+                $prefix = "Merhaba $($txtHitap.Text)`r`n`r`n"
+                $textBox.Text = $prefix + $content
+            }
+            else {
+                $textBox.Text = $content
+            }
+        }
+    }
+}
 
 function Load-TxtFiles($basePath) {
 
@@ -159,41 +180,45 @@ function Load-TxtFiles($basePath) {
 }
 
 # =====================
-# LİSTE SEÇİMİ (HİTAP EKLİ)
+# EVENTLER
 # =====================
-$listBox.Add_SelectedIndexChanged({
-    $key = $listBox.SelectedItem
-    if ($fileMap.ContainsKey($key)) {
-        try {
-            $content = Get-Content $fileMap[$key] -Raw -Encoding UTF8
 
-            if ($txtHitap.Text.Trim() -ne "") {
-                $prefix = "Merhaba $($txtHitap.Text)`r`n`r`n"
-                $textBox.Text = $prefix + $content
-            }
-            else {
-                $textBox.Text = $content
-            }
-        }
-        catch {
-            $textBox.Text = "Dosya okunamadı!"
-        }
+$listBox.Add_SelectedIndexChanged({ Show-Content })
+
+$txtHitap.Add_Enter({
+    if ($txtHitap.Text -eq $placeholderText) {
+        $txtHitap.Text = ""
+        $txtHitap.ForeColor = [System.Drawing.Color]::Black
     }
 })
 
-# =====================
-# KOPYALA
-# =====================
+$txtHitap.Add_Leave({
+    if ([string]::IsNullOrWhiteSpace($txtHitap.Text)) {
+        $txtHitap.Text = $placeholderText
+        $txtHitap.ForeColor = [System.Drawing.Color]::Gray
+    }
+    else {
+        $txtHitap.Text = Format-Hitap $txtHitap.Text
+        Show-Content
+    }
+})
+
+$txtHitap.Add_KeyDown({
+    if ($_.KeyCode -eq "Enter") {
+        $txtHitap.Text = Format-Hitap $txtHitap.Text
+        Show-Content
+    }
+})
+
 $btnCopy.Add_Click({
     if ($textBox.Text) {
         [System.Windows.Forms.Clipboard]::SetText($textBox.Text)
-        [System.Windows.Forms.MessageBox]::Show("Metin panoya kopyalandı.")
+        $lblStatus.Visible = $true
+        $statusTimer.Start()
+        $minimizeTimer.Start()
     }
 })
 
-# =====================
-# ENTER İLE YÜKLE
-# =====================
 $txtPath.Add_KeyDown({
     if ($_.KeyCode -eq "Enter") {
         if (Test-Path $txtPath.Text) {
@@ -205,9 +230,6 @@ $txtPath.Add_KeyDown({
     }
 })
 
-# =====================
-# BUTON İLE SEÇ
-# =====================
 $btnSelectFolder.Add_Click({
     $fd = New-Object System.Windows.Forms.FolderBrowserDialog
     if ($fd.ShowDialog() -eq "OK") {
@@ -216,9 +238,6 @@ $btnSelectFolder.Add_Click({
     }
 })
 
-# =====================
-# FORM AÇILIŞINDA DEFAULT PATH
-# =====================
 $form.Add_Shown({
     if (Test-Path $DefaultPath) {
         $txtPath.Text = $DefaultPath
